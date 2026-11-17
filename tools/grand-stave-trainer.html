@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Piano Studio — Grand Stave Trainer & Module 1 Lab</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 md:p-6 select-none">
+  <div class="max-w-5xl mx-auto space-y-4">
+    <!-- Header & Navigation Tabs -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">Module 1 · Lesson 1</span>
+          <h1 class="text-lg font-bold text-[var(--foreground)]">Piano Studio Interactive Practice Lab</h1>
+        </div>
+        <p class="text-xs text-[var(--muted-foreground)] mt-1">
+          Andrew Furmanczyk Curriculum (Episodes 1, 2 &amp; 5) · Landmark + Intervallic Sight-Reading &amp; Assignment Trainer
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-1.5 bg-[var(--background)] p-1 rounded-lg border border-[var(--border)]">
+        <button id="tab-trainer" onclick="switchTab('trainer')" class="px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] transition">
+          1. Grand Stave Trainer
+        </button>
+        <button id="tab-assignment" onclick="switchTab('assignment')" class="px-3 py-1.5 rounded-md text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          2. Pending Assignments (Scales &amp; Twinkle LH)
+        </button>
+        <button id="tab-metronome" onclick="switchTab('metronome')" class="px-3 py-1.5 rounded-md text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          3. Lesson 13 Timer &amp; Metronome
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: GRAND STAVE TRAINER -->
+    <div id="panel-trainer" class="space-y-4">
+      <!-- Controls Bar -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-[var(--muted-foreground)]">Mode:</span>
+          <button onclick="setMode('treble')" id="mode-treble" class="mode-btn px-2.5 py-1 rounded text-xs font-medium border border-[var(--border)]">Treble Clef Only</button>
+          <button onclick="setMode('bass')" id="mode-bass" class="mode-btn px-2.5 py-1 rounded text-xs font-medium border border-[var(--border)]">Bass Clef Only</button>
+          <button onclick="setMode('grand')" id="mode-grand" class="mode-btn px-2.5 py-1 rounded text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] border border-[var(--primary)]">Full Grand Stave</button>
+          <button onclick="setMode('intervals')" id="mode-intervals" class="mode-btn px-2.5 py-1 rounded text-xs font-medium border border-[var(--border)]">Intervals (2nd–5th)</button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-[var(--foreground)]">
+            <input type="checkbox" id="toggle-landmarks" checked onchange="renderStave()" class="rounded border-[var(--border)]" />
+            <span>Show Landmark Anchors (C4 / Doggie D / Boat B / FACE / ACEG)</span>
+          </label>
+          <div class="text-xs font-semibold px-2.5 py-1 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+            Score: <span id="score-correct">0</span> / <span id="score-total">0</span> · Streak: <span id="score-streak">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grand Stave Canvas Card -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div id="prompt-banner" class="text-sm font-semibold text-[var(--foreground)]">
+            Identify the note on the Grand Stave (click the matching piano key below):
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="replayTargetAudio()" class="px-2.5 py-1 rounded text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
+              🔊 Hear Target
+            </button>
+            <button onclick="nextQuestion()" class="px-2.5 py-1 rounded text-xs font-medium border border-[var(--border)] hover:bg-[var(--secondary)]">
+              Skip →
+            </button>
+          </div>
+        </div>
+
+        <!-- SVG Grand Stave -->
+        <div class="w-full overflow-x-auto bg-[var(--background)] border border-[var(--border)] rounded-lg p-2 flex justify-center">
+          <svg id="stave-svg" viewBox="0 0 760 270" class="w-full max-w-3xl h-auto"></svg>
+        </div>
+
+        <!-- Feedback & Compass / Mnemonic Hint Box -->
+        <div id="feedback-box" class="mt-3 px-3 py-2 rounded-lg bg-[var(--background)] border border-[var(--border)] text-xs flex items-center justify-between">
+          <span id="feedback-text" class="text-[var(--muted-foreground)]">
+            Tip: Use Middle Trio (Boat B3, Middle C4, Doggie D4) or FACE / All Cows Eat Grass as your anchor, then count intervals!
+          </span>
+          <span id="compass-badge" class="font-medium text-[var(--muted-foreground)]"></span>
+        </div>
+
+        <!-- Interval Answer Buttons (Visible only in Intervals mode) -->
+        <div id="interval-buttons" class="hidden mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap items-center justify-center gap-2">
+          <span class="text-xs font-semibold text-[var(--muted-foreground)] mr-2">Select Visual Interval:</span>
+          <button onclick="checkIntervalAnswer(2)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition">
+            2nd (Step: Line ↔ Space)
+          </button>
+          <button onclick="checkIntervalAnswer(3)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition">
+            3rd (Skip: Line→Line / Space→Space)
+          </button>
+          <button onclick="checkIntervalAnswer(4)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition">
+            Perfect 4th (Line ↔ Space + 1)
+          </button>
+          <button onclick="checkIntervalAnswer(5)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition">
+            Perfect 5th (Double Skip)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: PENDING ASSIGNMENTS (MODULE 1, LESSON 1) -->
+    <div id="panel-assignment" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Assignment 1: C Major Scale & Thumb Tuck -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)]">Task 1 · Warm-Up (25%)</span>
+            <span class="text-xs text-[var(--muted-foreground)]">Target: ~60 BPM</span>
+          </div>
+          <h2 class="text-base font-bold text-[var(--foreground)]">C Major 1-Octave Scale (Thumb Tuck Drill)</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Bridge the Episode 12 Theory-Reflex Gap by focusing on a relaxed, horizontal wrist motion during the <strong>3 → 1 Thumb Tuck</strong> and <strong>1 → 3 Finger Crossover</strong>.
+          </p>
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 space-y-2 text-xs">
+            <div>
+              <strong class="text-[var(--foreground)]">Right Hand (Ascending C4 → C5):</strong>
+              <div class="font-mono mt-0.5 text-[var(--muted-foreground)]">C4(1) - D4(2) - E4(3) - <span class="px-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">F4(1 TUCK)</span> - G4(2) - A4(3) - B4(4) - C5(5)</div>
+            </div>
+            <div>
+              <strong class="text-[var(--foreground)]">Left Hand Mirror (Descending from Middle C4 → C3):</strong>
+              <div class="font-mono mt-0.5 text-[var(--muted-foreground)]">C4(1) - B3(2) - A3(3) - <span class="px-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">G3(1 TUCK)</span> - F3(2) - E3(3) - D3(4) - C3(5)</div>
+            </div>
+            <div>
+              <strong class="text-[var(--foreground)]">Left Hand Standard (Ascending C3 → C4):</strong>
+              <div class="font-mono mt-0.5 text-[var(--muted-foreground)]">C3(5) - D3(4) - E3(3) - F3(2) - G3(1) - <span class="px-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">A3(3 CROSS)</span> - B3(2) - C4(1)</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="playDemoSequence('rh_scale')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+              ▶ Play RH Scale (60 BPM)
+            </button>
+            <button onclick="playDemoSequence('lh_mirror')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
+              ▶ Play LH Mirror (from C4)
+            </button>
+            <button onclick="stopDemoSequence()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)]">
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- Assignment 2: Twinkle, Twinkle LH Broken Chords -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)]">Task 2 · Core Repertoire (60%)</span>
+            <span class="text-xs text-[var(--muted-foreground)]">Target: 66 BPM</span>
+          </div>
+          <h2 class="text-base font-bold text-[var(--foreground)]">Twinkle, Twinkle — Bars 1–2 Left Hand Alone</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Read the Bass Stave by landmarking <strong>C3</strong> (2nd space: <em>All <u>Cows</u></em>) and reading the broken chord shapes by interval:
+          </p>
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 space-y-2 text-xs">
+            <div>
+              <strong class="text-[var(--foreground)]">Bar 1 — C Major Broken Triad (x2):</strong>
+              <div class="font-mono mt-0.5 text-[var(--muted-foreground)]">
+                Notes: <span class="font-bold text-[var(--foreground)]">C3 - G3 - E3 - G3</span> (repeat) · Fingering: <span class="px-1.5 py-0.5 rounded bg-[var(--secondary)] font-bold">5 - 1 - 3 - 1</span>
+              </div>
+              <div class="text-[var(--muted-foreground)] mt-0.5">Stave: Space 2 (C3) → Space 4 (G3) → Space 3 (E3) → Space 4 (G3)</div>
+            </div>
+            <div>
+              <strong class="text-[var(--foreground)]">Bar 2 — F Major / IV6-4 Broken Shape (x2):</strong>
+              <div class="font-mono mt-0.5 text-[var(--muted-foreground)]">
+                Notes: <span class="font-bold text-[var(--foreground)]">C3 - A3 - F3 - A3</span> (repeat) · Fingering: <span class="px-1.5 py-0.5 rounded bg-[var(--secondary)] font-bold">5 - 1 - 2 - 1</span>
+              </div>
+              <div class="text-[var(--muted-foreground)] mt-0.5">Stave: Space 2 (C3) → Top Line 5 (A3) → Line 4 (F3) → Top Line 5 (A3)</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="playDemoSequence('twinkle_lh')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+              ▶ Hear &amp; Watch Bars 1–2 LH (66 BPM)
+            </button>
+            <button onclick="playDemoSequence('ode_to_joy')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
+              ▶ Ode to Joy Bars 1–4 (72 BPM)
+            </button>
+            <button onclick="stopDemoSequence()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)]">
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Sequence Status Banner -->
+      <div id="sequence-status" class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-xs font-medium text-[var(--muted-foreground)] flex items-center justify-between">
+        <span id="sequence-status-text">Click any demo button above to see the notes and finger numbers light up on the keyboard below.</span>
+        <span id="sequence-finger-badge" class="px-2.5 py-1 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] font-bold">Ready</span>
+      </div>
+    </div>
+
+    <!-- TAB 3: LESSON 13 PRACTICE SPLIT TIMER & METRONOME -->
+    <div id="panel-metronome" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Metronome Card -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-3">
+          <h2 class="text-base font-bold text-[var(--foreground)]">Programmable Studio Metronome (4/4)</h2>
+          <div class="flex items-center justify-between">
+            <div>
+              <span id="bpm-display" class="text-2xl font-bold text-[var(--foreground)]">60</span>
+              <span class="text-xs text-[var(--muted-foreground)]">BPM</span>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick="setBpm(60)" class="px-2.5 py-1 rounded text-xs border border-[var(--border)] hover:bg-[var(--secondary)]">60 (Scales)</button>
+              <button onclick="setBpm(66)" class="px-2.5 py-1 rounded text-xs border border-[var(--border)] hover:bg-[var(--secondary)]">66 (Twinkle)</button>
+              <button onclick="setBpm(72)" class="px-2.5 py-1 rounded text-xs border border-[var(--border)] hover:bg-[var(--secondary)]">72 (Ode to Joy)</button>
+            </div>
+          </div>
+          <input type="range" id="bpm-slider" min="40" max="120" value="60" oninput="setBpm(this.value)" class="w-full" />
+          <div class="flex items-center justify-between pt-1">
+            <button id="metronome-btn" onclick="toggleMetronome()" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">
+              ▶ Start Metronome
+            </button>
+            <div class="flex gap-2">
+              <div id="beat-0" class="w-6 h-6 rounded-full border border-[var(--border)] flex items-center justify-center text-xs font-bold">1</div>
+              <div id="beat-1" class="w-6 h-6 rounded-full border border-[var(--border)] flex items-center justify-center text-xs font-bold">2</div>
+              <div id="beat-2" class="w-6 h-6 rounded-full border border-[var(--border)] flex items-center justify-center text-xs font-bold">3</div>
+              <div id="beat-3" class="w-6 h-6 rounded-full border border-[var(--border)] flex items-center justify-center text-xs font-bold">4</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lesson 13 Split Timer -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-3">
+          <h2 class="text-base font-bold text-[var(--foreground)]">Lesson 13 Practice Split (30-Min Routine)</h2>
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-[var(--foreground)]">1. Warm-Up &amp; Scales (25% · 7.5 min)</div>
+                <div class="text-[var(--muted-foreground)]">C Major 1-Octave (RH + LH Mirror) @ 60 BPM</div>
+              </div>
+              <input type="checkbox" class="w-4 h-4" />
+            </div>
+            <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-[var(--foreground)]">2. Core Repertoire (60% · 18 min)</div>
+                <div class="text-[var(--muted-foreground)]">Ode to Joy (Bars 1–16) + Twinkle LH (Bars 1–2)</div>
+              </div>
+              <input type="checkbox" class="w-4 h-4" />
+            </div>
+            <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-[var(--foreground)]">3. Sight-Reading &amp; Ear (15% · 4.5 min)</div>
+                <div class="text-[var(--muted-foreground)]">Grand Stave Trainer (Full Grand Stave + Intervals)</div>
+              </div>
+              <input type="checkbox" class="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE PIANO KEYBOARD (ALWAYS VISIBLE, C3 to G5) -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-[var(--muted-foreground)]">
+          Interactive 2.5-Octave Piano Keyboard (C3 to G5) — Click keys to play audio &amp; answer drills
+        </span>
+        <span class="text-xs text-[var(--muted-foreground)]">
+          🔵 Boat B3 · 🟢 Middle C4 · 🟠 Doggie D4
+        </span>
+      </div>
+      <div class="overflow-x-auto pb-2 flex justify-center">
+        <div id="piano-keyboard" class="relative flex h-40 select-none"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- DIATONIC NOTE DEFINITIONS (C3 to G5) ---
+    // step 0 = C4 (Middle C)
+    const NOTES = [
+      { id: "C3", letter: "C", octave: 3, step: -7, freq: 130.81, clef: "bass", landmark: "All Cows (Space 2)", hasSharp: true, sharpFreq: 138.59 },
+      { id: "D3", letter: "D", octave: 3, step: -6, freq: 146.83, clef: "bass", landmark: "Middle Bass Line (Compass Pivot)", hasSharp: true, sharpFreq: 155.56 },
+      { id: "E3", letter: "E", octave: 3, step: -5, freq: 164.81, clef: "bass", landmark: "All Cows Eat (Space 3)", hasSharp: false },
+      { id: "F3", letter: "F", octave: 3, step: -4, freq: 174.61, clef: "bass", landmark: "F-Clef Anchor Line (Line 4)", hasSharp: true, sharpFreq: 185.00 },
+      { id: "G3", letter: "G", octave: 3, step: -3, freq: 196.00, clef: "bass", landmark: "All Cows Eat Grass (Space 4)", hasSharp: true, sharpFreq: 207.65 },
+      { id: "A3", letter: "A", octave: 3, step: -2, freq: 220.00, clef: "bass", landmark: "Top Bass Line (Away)", hasSharp: true, sharpFreq: 233.08 },
+      { id: "B3", letter: "B", octave: 3, step: -1, freq: 246.94, clef: "bass", landmark: "Boat B (Sits on top of Bass Stave)", hasSharp: false, badgeColor: "#3b82f6" },
+      { id: "C4", letter: "C", octave: 4, step: 0,  freq: 261.63, clef: "treble", landmark: "Middle C (Ledger Line Anchor)", hasSharp: true, sharpFreq: 277.18, badgeColor: "#10b981" },
+      { id: "D4", letter: "D", octave: 4, step: 1,  freq: 293.66, clef: "treble", landmark: "Doggie D (Hangs under Treble Line 1)", hasSharp: true, sharpFreq: 311.13, badgeColor: "#f59e0b" },
+      { id: "E4", letter: "E", octave: 4, step: 2,  freq: 329.63, clef: "treble", landmark: "Every (Bottom Treble Line 1)", hasSharp: false },
+      { id: "F4", letter: "F", octave: 4, step: 3,  freq: 349.23, clef: "treble", landmark: "F in FACE (Space 1)", hasSharp: true, sharpFreq: 369.99 },
+      { id: "G4", letter: "G", octave: 4, step: 4,  freq: 392.00, clef: "treble", landmark: "G-Clef Curl Line (Line 2)", hasSharp: true, sharpFreq: 415.30 },
+      { id: "A4", letter: "A", octave: 4, step: 5,  freq: 440.00, clef: "treble", landmark: "A in FACE (Space 2)", hasSharp: true, sharpFreq: 466.16 },
+      { id: "B4", letter: "B", octave: 4, step: 6,  freq: 493.88, clef: "treble", landmark: "Middle Treble Line (Compass Pivot)", hasSharp: false },
+      { id: "C5", letter: "C", octave: 5, step: 7,  freq: 523.25, clef: "treble", landmark: "C in FACE (Space 3)", hasSharp: true, sharpFreq: 554.37 },
+      { id: "D5", letter: "D", octave: 5, step: 8,  freq: 587.33, clef: "treble", landmark: "Deserves (Line 4)", hasSharp: true, sharpFreq: 622.25 },
+      { id: "E5", letter: "E", octave: 5, step: 9,  freq: 659.25, clef: "treble", landmark: "E in FACE (Space 4)", hasSharp: false },
+      { id: "F5", letter: "F", octave: 5, step: 10, freq: 698.46, clef: "treble", landmark: "Fudge (Top Treble Line 5)", hasSharp: true, sharpFreq: 739.99 },
+      { id: "G5", letter: "G", octave: 5, step: 11, freq: 783.99, clef: "treble", landmark: "Sits on top of Treble Stave", hasSharp: false }
+    ];
+
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playPianoTone(freq, duration = 0.65) {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = "triangle";
+      osc2.type = "sine";
+      osc1.frequency.setValueAtTime(freq, now);
+      osc2.frequency.setValueAtTime(freq * 2, now);
+
+      const g2 = ctx.createGain();
+      g2.gain.setValueAtTime(0.18, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      osc1.connect(gain);
+      osc2.connect(g2);
+      g2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + duration);
+      osc2.stop(now + duration);
+    }
+
+    function playClickTone(accent = false) {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(accent ? 1100 : 750, now);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    }
+
+    // --- STATE ---
+    let currentMode = "grand"; // 'treble' | 'bass' | 'grand' | 'intervals'
+    let targetNote = NOTES[7]; // C4
+    let secondNote = null;     // Used for intervals mode
+    let targetInterval = null; // 2, 3, 4, or 5
+    let scoreCorrect = 0;
+    let scoreTotal = 0;
+    let scoreStreak = 0;
+
+    // --- Y-COORDINATE MAPPING ON GRAND STAVE ---
+    // Line spacing = 12px (half-step between line and space = 6px)
+    // Treble Lines (top to bottom): F5 (step 10) -> y=42, D5(8)->54, B4(6)->66, G4(4)->78, E4(2)->90
+    // Doggie D4 (step 1) -> y=96
+    // Middle C4 (step 0) -> y=126 (centered in gap between treble bottom 90 and bass top 162)
+    // Boat B3 (step -1) -> y=156
+    // Bass Lines (top to bottom): A3 (step -2)->162, F3(-4)->174, D3(-6)->186, B2(-8)->198, G2(-10)->210
+    function getNoteY(note) {
+      if (note.step === 0) return 126; // Middle C4 in center of Grand Stave
+      if (note.step > 0) {
+        // Relative to E4 (step 2) at y=90
+        return 90 - (note.step - 2) * 6;
+      } else {
+        // Relative to A3 (step -2) at y=162
+        return 162 + (-2 - note.step) * 6;
+      }
+    }
+
+    function getStemDirection(note) {
+      // Compass Rule: Middle 3rd line acts as magnet
+      // Treble middle line = B4 (step 6): step >= 6 points DOWN, step < 6 points UP
+      // Bass middle line = D3 (step -6): step >= -6 points DOWN, step < -6 points UP
+      if (note.clef === "treble") {
+        return note.step >= 6 ? "down" : "up";
+      } else {
+        return note.step >= -6 ? "down" : "up";
+      }
+    }
+
+    function renderStave() {
+      const svg = document.getElementById("stave-svg");
+      const showLandmarks = document.getElementById("toggle-landmarks").checked;
+      const strokeColor = "currentColor";
+
+      let html = `
+        <!-- Brace / Left Barline -->
+        <line x1="50" y1="42" x2="50" y2="210" stroke="${strokeColor}" stroke-width="2.5" />
+        <line x1="720" y1="42" x2="720" y2="210" stroke="${strokeColor}" stroke-width="2" />
+      `;
+
+      // Draw 5 Treble Lines (y = 42, 54, 66, 78, 90)
+      for (let i = 0; i < 5; i++) {
+        const y = 42 + i * 12;
+        const isMiddle = i === 2;
+        html += `<line x1="50" y1="${y}" x2="720" y2="${y}" stroke="${strokeColor}" stroke-width="${isMiddle ? '1.6' : '1.1'}" stroke-opacity="${isMiddle ? '0.85' : '0.55'}" />`;
+      }
+
+      // Draw 5 Bass Lines (y = 162, 174, 186, 198, 210)
+      for (let i = 0; i < 5; i++) {
+        const y = 162 + i * 12;
+        const isMiddle = i === 2;
+        html += `<line x1="50" y1="${y}" x2="720" y2="${y}" stroke="${strokeColor}" stroke-width="${isMiddle ? '1.6' : '1.1'}" stroke-opacity="${isMiddle ? '0.85' : '0.55'}" />`;
+      }
+
+      // Clef Symbols
+      html += `
+        <text x="62" y="84" font-size="56" fill="${strokeColor}" font-family="serif">𝄞</text>
+        <text x="62" y="196" font-size="44" fill="${strokeColor}" font-family="serif">𝄢</text>
+      `;
+
+      // Optional Landmark Overlay
+      if (showLandmarks) {
+        // Middle Trio: Doggie D4, Middle C4, Boat B3
+        html += `
+          <!-- Middle C4 Ghost Anchor -->
+          <line x1="145" y1="126" x2="175" y2="126" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,2" />
+          <circle cx="160" cy="126" r="5" fill="#10b981" fill-opacity="0.35" stroke="#10b981" stroke-width="1.5" />
+          <text x="160" y="142" font-size="11" fill="#10b981" text-anchor="middle" font-weight="bold">Middle C4</text>
+
+          <!-- Doggie D4 Ghost Anchor -->
+          <circle cx="215" cy="96" r="5" fill="#f59e0b" fill-opacity="0.35" stroke="#f59e0b" stroke-width="1.5" />
+          <text x="215" y="112" font-size="11" fill="#f59e0b" text-anchor="middle" font-weight="bold">Doggie D4</text>
+
+          <!-- Boat B3 Ghost Anchor -->
+          <circle cx="270" cy="156" r="5" fill="#3b82f6" fill-opacity="0.35" stroke="#3b82f6" stroke-width="1.5" />
+          <text x="270" y="147" font-size="11" fill="#3b82f6" text-anchor="middle" font-weight="bold">Boat B3</text>
+        `;
+
+        // Treble FACE Spaces on right side
+        const faceY = [
+          { l: "F4", y: 84 },
+          { l: "A4", y: 72 },
+          { l: "C5", y: 60 },
+          { l: "E5", y: 48 }
+        ];
+        faceY.forEach((item, idx) => {
+          html += `<text x="${615 + idx * 22}" y="${item.y + 4}" font-size="11" fill="#10b981" font-weight="bold" opacity="0.8">${item.l}</text>`;
+        });
+
+        // Bass ACEG Spaces on right side
+        const acegY = [
+          { l: "A2", y: 204 },
+          { l: "C3", y: 192 },
+          { l: "E3", y: 180 },
+          { l: "G3", y: 168 }
+        ];
+        acegY.forEach((item, idx) => {
+          html += `<text x="${615 + idx * 22}" y="${item.y + 4}" font-size="11" fill="#3b82f6" font-weight="bold" opacity="0.8">${item.l}</text>`;
+        });
+      }
+
+      // Draw Primary Target Note
+      html += renderSingleNoteSVG(targetNote, currentMode === "intervals" ? 390 : 430, "#6366f1", currentMode === "intervals" ? "Anchor Note" : "");
+
+      // Draw Second Note if in Intervals Mode
+      if (currentMode === "intervals" && secondNote) {
+        html += renderSingleNoteSVG(secondNote, 485, "#ec4899", "Target Note");
+      }
+
+      svg.innerHTML = html;
+
+      // Update Compass Rule Badge
+      const dir = getStemDirection(targetNote);
+      const pivotName = targetNote.clef === "treble" ? "B4 (Treble Line 3)" : "D3 (Bass Line 3)";
+      document.getElementById("compass-badge").textContent =
+        `Compass Rule: Stem points ${dir.toUpperCase()} (pivot: ${pivotName})`;
+    }
+
+    function renderSingleNoteSVG(note, x, color, label) {
+      const y = getNoteY(note);
+      const stemDir = getStemDirection(note);
+      let s = "";
+
+      // Ledger line for Middle C4
+      if (note.step === 0) {
+        s += `<line x1="${x - 16}" y1="${y}" x2="${x + 16}" y2="${y}" stroke="currentColor" stroke-width="2" />`;
+      }
+
+      // Stem
+      if (stemDir === "up") {
+        s += `<line x1="${x + 7}" y1="${y}" x2="${x + 7}" y2="${y - 36}" stroke="${color}" stroke-width="2.2" />`;
+      } else {
+        s += `<line x1="${x - 7}" y1="${y}" x2="${x - 7}" y2="${y + 36}" stroke="${color}" stroke-width="2.2" />`;
+      }
+
+      // Notehead
+      s += `<ellipse cx="${x}" cy="${y}" rx="8.5" ry="6" transform="rotate(-18 ${x} ${y})" fill="${color}" />`;
+
+      if (label) {
+        s += `<text x="${x}" y="242" font-size="11" fill="${color}" text-anchor="middle" font-weight="bold">${label}</text>`;
+      }
+      return s;
+    }
+
+    // --- KEYBOARD RENDERING ---
+    function renderKeyboard(highlightId = null, fingerLabel = null) {
+      const container = document.getElementById("piano-keyboard");
+      let html = "";
+
+      NOTES.forEach((note) => {
+        const isHighlighted = highlightId === note.id;
+        let landmarkDot = "";
+        if (note.badgeColor) {
+          landmarkDot = `<span class="w-2.5 h-2.5 rounded-full mb-1" style="background:${note.badgeColor}"></span>`;
+        }
+
+        const activeBg = isHighlighted
+          ? "background: #6366f1; color: white;"
+          : "background: white; color: #1e293b;";
+
+        html += `
+          <div class="relative flex-shrink-0">
+            <button
+              onclick="handleKeyClick('${note.id}')"
+              style="${activeBg}"
+              class="w-10 h-36 border border-slate-300 rounded-b-lg flex flex-col items-center justify-end pb-2 text-xs font-semibold shadow-sm hover:opacity-90 active:translate-y-0.5 transition"
+            >
+              ${fingerLabel && isHighlighted ? `<span class="px-1.5 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs mb-1">F${fingerLabel}</span>` : landmarkDot}
+              <span>${note.id}</span>
+            </button>
+            ${
+              note.hasSharp
+                ? `<button
+                    onclick="playPianoTone(${note.sharpFreq}, 0.5)"
+                    title="${note.letter}#${note.octave}"
+                    style="background:#0f172a; color:#f8fafc; left: 27px;"
+                    class="absolute top-0 z-10 w-6 h-22 rounded-b-md border border-slate-700 flex items-end justify-center pb-1.5 text-xs hover:opacity-90"
+                  >♯</button>`
+                : ""
+            }
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // --- QUIZ LOGIC ---
+    function setMode(mode) {
+      currentMode = mode;
+      ["treble", "bass", "grand", "intervals"].forEach((m) => {
+        const btn = document.getElementById(`mode-${m}`);
+        if (m === mode) {
+          btn.className = "mode-btn px-2.5 py-1 rounded text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] border border-[var(--primary)]";
+        } else {
+          btn.className = "mode-btn px-2.5 py-1 rounded text-xs font-medium border border-[var(--border)]";
+        }
+      });
+
+      const intervalBar = document.getElementById("interval-buttons");
+      const promptBanner = document.getElementById("prompt-banner");
+      if (mode === "intervals") {
+        intervalBar.classList.remove("hidden");
+        promptBanner.textContent = "Spot the visual interval from Anchor Note to Target Note (or click the 2nd note on the keyboard):";
+      } else {
+        intervalBar.classList.add("hidden");
+        promptBanner.textContent = "Identify the note on the Grand Stave (click the matching piano key below):";
+      }
+
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      let pool = NOTES;
+      if (currentMode === "treble") {
+        pool = NOTES.filter((n) => n.clef === "treble");
+      } else if (currentMode === "bass") {
+        pool = NOTES.filter((n) => n.clef === "bass");
+      }
+
+      if (currentMode === "intervals") {
+        const intervals = [2, 3, 4, 5];
+        targetInterval = intervals[Math.floor(Math.random() * intervals.length)];
+        const dir = Math.random() > 0.4 ? 1 : -1;
+        const stepDelta = dir * (targetInterval - 1);
+
+        const validStarts = NOTES.filter((n) => {
+          const targetStep = n.step + stepDelta;
+          return targetStep >= -7 && targetStep <= 11;
+        });
+
+        targetNote = validStarts[Math.floor(Math.random() * validStarts.length)];
+        secondNote = NOTES.find((n) => n.step === targetNote.step + stepDelta);
+      } else {
+        let candidate = pool[Math.floor(Math.random() * pool.length)];
+        if (candidate.id === targetNote.id && pool.length > 1) {
+          candidate = pool[(pool.indexOf(candidate) + 1) % pool.length];
+        }
+        targetNote = candidate;
+        secondNote = null;
+      }
+
+      renderStave();
+      renderKeyboard();
+    }
+
+    function replayTargetAudio() {
+      playPianoTone(targetNote.freq, 0.65);
+      if (currentMode === "intervals" && secondNote) {
+        setTimeout(() => playPianoTone(secondNote.freq, 0.65), 450);
+      }
+    }
+
+    function handleKeyClick(noteId) {
+      const clicked = NOTES.find((n) => n.id === noteId);
+      if (!clicked) return;
+      playPianoTone(clicked.freq, 0.6);
+
+      if (currentMode === "intervals" && secondNote) {
+        if (clicked.id === secondNote.id) {
+          recordResult(true, `Spot on! ${targetNote.id} → ${secondNote.id} is a ${ordinal(targetInterval)} (${secondNote.landmark}).`);
+        } else {
+          recordResult(false, `You played ${clicked.id}. Try counting the interval from ${targetNote.id} (${targetNote.landmark}).`);
+        }
+        return;
+      }
+
+      if (clicked.id === targetNote.id) {
+        recordResult(true, `Correct! ${clicked.id} — ${clicked.landmark}.`);
+      } else {
+        recordResult(false, `That was ${clicked.id}. Look closely at the stave anchor for ${targetNote.clef.toUpperCase()} clef!`);
+      }
+    }
+
+    function checkIntervalAnswer(chosenInterval) {
+      if (currentMode !== "intervals" || !secondNote) return;
+      replayTargetAudio();
+      if (chosenInterval === targetInterval) {
+        recordResult(
+          true,
+          `Correct! ${targetNote.id} to ${secondNote.id} is a ${ordinal(targetInterval)}.`
+        );
+      } else {
+        recordResult(
+          false,
+          `Not quite — remember: 2nd = Line↔Space step, 3rd = Line→Line or Space→Space skip, 4th = Line↔Space + 1.`
+        );
+      }
+    }
+
+    function ordinal(n) {
+      if (n === 2) return "2nd (Step)";
+      if (n === 3) return "3rd (Skip)";
+      if (n === 4) return "Perfect 4th";
+      return "Perfect 5th";
+    }
+
+    function recordResult(isCorrect, message) {
+      scoreTotal++;
+      if (isCorrect) {
+        scoreCorrect++;
+        scoreStreak++;
+      } else {
+        scoreStreak = 0;
+      }
+      document.getElementById("score-correct").textContent = scoreCorrect;
+      document.getElementById("score-total").textContent = scoreTotal;
+      document.getElementById("score-streak").textContent = scoreStreak;
+
+      const feedbackText = document.getElementById("feedback-text");
+      feedbackText.textContent = (isCorrect ? "✅ " : "❌ ") + message;
+
+      if (isCorrect) {
+        renderKeyboard(secondNote ? secondNote.id : targetNote.id);
+        setTimeout(() => nextQuestion(), 950);
+      }
+    }
+
+    // --- DEMO SEQUENCES FOR MODULE 1 ASSIGNMENTS ---
+    let sequenceTimers = [];
+    function stopDemoSequence() {
+      sequenceTimers.forEach((t) => clearTimeout(t));
+      sequenceTimers = [];
+      renderKeyboard();
+      document.getElementById("sequence-status-text").textContent = "Playback stopped.";
+      document.getElementById("sequence-finger-badge").textContent = "Ready";
+    }
+
+    function playDemoSequence(type) {
+      stopDemoSequence();
+      let steps = [];
+      let bpm = 60;
+      let title = "";
+
+      if (type === "rh_scale") {
+        bpm = 60;
+        title = "C Major RH Scale (Watch Finger 1 Thumb Tuck on F4!)";
+        steps = [
+          { note: "C4", finger: "1" }, { note: "D4", finger: "2" }, { note: "E4", finger: "3" },
+          { note: "F4", finger: "1 (TUCK)" }, { note: "G4", finger: "2" }, { note: "A4", finger: "3" },
+          { note: "B4", finger: "4" }, { note: "C5", finger: "5" },
+          { note: "B4", finger: "4" }, { note: "A4", finger: "3" }, { note: "G4", finger: "2" },
+          { note: "F4", finger: "1" }, { note: "E4", finger: "3 (CROSS)" }, { note: "D4", finger: "2" },
+          { note: "C4", finger: "1" }
+        ];
+      } else if (type === "lh_mirror") {
+        bpm = 60;
+        title = "C Major LH Mirror Scale (Down from Middle C4: 1-2-3-1-2-3-4-5)";
+        steps = [
+          { note: "C4", finger: "1" }, { note: "B3", finger: "2" }, { note: "A3", finger: "3" },
+          { note: "G3", finger: "1 (TUCK)" }, { note: "F3", finger: "2" }, { note: "E3", finger: "3" },
+          { note: "D3", finger: "4" }, { note: "C3", finger: "5" },
+          { note: "D3", finger: "4" }, { note: "E3", finger: "3" }, { note: "F3", finger: "2" },
+          { note: "G3", finger: "1" }, { note: "A3", finger: "3 (CROSS)" }, { note: "B3", finger: "2" },
+          { note: "C4", finger: "1" }
+        ];
+      } else if (type === "twinkle_lh") {
+        bpm = 66;
+        title = "Twinkle, Twinkle Bars 1–2 Left Hand Broken Chords (Bass Stave)";
+        steps = [
+          // Bar 1: C3-G3-E3-G3 x2 (5-1-3-1)
+          { note: "C3", finger: "5 (Bar 1)" }, { note: "G3", finger: "1" }, { note: "E3", finger: "3" }, { note: "G3", finger: "1" },
+          { note: "C3", finger: "5" }, { note: "G3", finger: "1" }, { note: "E3", finger: "3" }, { note: "G3", finger: "1" },
+          // Bar 2: C3-A3-F3-A3 x2 (5-1-2-1)
+          { note: "C3", finger: "5 (Bar 2)" }, { note: "A3", finger: "1" }, { note: "F3", finger: "2" }, { note: "A3", finger: "1" },
+          { note: "C3", finger: "5" }, { note: "A3", finger: "1" }, { note: "F3", finger: "2" }, { note: "A3", finger: "1" }
+        ];
+      } else if (type === "ode_to_joy") {
+        bpm = 72;
+        title = "Ode to Joy Bars 1–4 Melody (RH 3-3-4-5-5-4-3-2-1-1-2-3-3-2-2)";
+        steps = [
+          { note: "E4", finger: "3" }, { note: "E4", finger: "3" }, { note: "F4", finger: "4" }, { note: "G4", finger: "5" },
+          { note: "G4", finger: "5" }, { note: "F4", finger: "4" }, { note: "E4", finger: "3" }, { note: "D4", finger: "2" },
+          { note: "C4", finger: "1" }, { note: "C4", finger: "1" }, { note: "D4", finger: "2" }, { note: "E4", finger: "3" },
+          { note: "E4", finger: "3" }, { note: "D4", finger: "2" }, { note: "D4", finger: "2" }
+        ];
+      }
+
+      const intervalMs = (60 / bpm) * 1000;
+      document.getElementById("sequence-status-text").textContent = title;
+
+      steps.forEach((step, idx) => {
+        const timer = setTimeout(() => {
+          const n = NOTES.find((item) => item.id === step.note);
+          if (n) {
+            playPianoTone(n.freq, intervalMs / 1000 * 0.9);
+            renderKeyboard(n.id, step.finger.split(" ")[0]);
+            document.getElementById("sequence-finger-badge").textContent =
+              `Note: ${n.id} · Finger: ${step.finger}`;
+          }
+          if (idx === steps.length - 1) {
+            setTimeout(() => {
+              renderKeyboard();
+              document.getElementById("sequence-finger-badge").textContent = "Complete ✓";
+            }, intervalMs);
+          }
+        }, idx * intervalMs);
+        sequenceTimers.push(timer);
+      });
+    }
+
+    // --- METRONOME ---
+    let metroBpm = 60;
+    let metroInterval = null;
+    let metroBeat = 0;
+
+    function setBpm(val) {
+      metroBpm = parseInt(val, 10);
+      document.getElementById("bpm-display").textContent = metroBpm;
+      document.getElementById("bpm-slider").value = metroBpm;
+      if (metroInterval) {
+        stopMetronome();
+        startMetronome();
+      }
+    }
+
+    function toggleMetronome() {
+      if (metroInterval) {
+        stopMetronome();
+      } else {
+        startMetronome();
+      }
+    }
+
+    function startMetronome() {
+      metroBeat = 0;
+      document.getElementById("metronome-btn").textContent = "⏹ Stop Metronome";
+      const tick = () => {
+        playClickTone(metroBeat === 0);
+        for (let i = 0; i < 4; i++) {
+          const el = document.getElementById(`beat-${i}`);
+          if (i === metroBeat) {
+            el.className = "w-6 h-6 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center text-xs font-bold";
+          } else {
+            el.className = "w-6 h-6 rounded-full border border-[var(--border)] flex items-center justify-center text-xs font-bold";
+          }
+        }
+        metroBeat = (metroBeat + 1) % 4;
+      };
+      tick();
+      metroInterval = setInterval(tick, (60 / metroBpm) * 1000);
+    }
+
+    function stopMetronome() {
+      clearInterval(metroInterval);
+      metroInterval = null;
+      document.getElementById("metronome-btn").textContent = "▶ Start Metronome";
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`beat-${i}`).className =
+          "w-6 h-6 rounded-full border border-[var(--border)] flex items-center justify-center text-xs font-bold";
+      }
+    }
+
+    // --- TAB SWITCHING ---
+    function switchTab(tab) {
+      ["trainer", "assignment", "metronome"].forEach((t) => {
+        const panel = document.getElementById(`panel-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          panel.classList.remove("hidden");
+          btn.className = "px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] transition";
+        } else {
+          panel.classList.add("hidden");
+          btn.className = "px-3 py-1.5 rounded-md text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition";
+        }
+      });
+    }
+
+    // Initialize on load
+    renderStave();
+    renderKeyboard();
+  </script>
+</body>
+</html>

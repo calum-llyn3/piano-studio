@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Piano Studio" />
+  <title>Piano Studio — iPad Lectern</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .badge {
+      background: #6366f1;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      background: #0f172a;
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    .tab-btn {
+      min-height: 42px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+      background: transparent;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #6366f1;
+      color: #ffffff;
+    }
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .touch-btn {
+      min-height: 44px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .touch-btn:active {
+      transform: scale(0.97);
+    }
+    .touch-btn.primary {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: #ffffff;
+    }
+    .touch-btn.emerald {
+      background: #10b981;
+      border-color: #10b981;
+      color: #052e16;
+    }
+    .touch-btn.amber {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      color: #0f172a;
+    }
+    select.touch-select {
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .stave-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 8px;
+      width: 100%;
+    }
+    .coach-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 760px) {
+      .coach-grid {
+        grid-template-columns: 5fr 7fr;
+      }
+    }
+    .readout-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kbd-scroll {
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 4px;
+    }
+    .kbd-wrap {
+      display: flex;
+      position: relative;
+    }
+    .white-key {
+      width: 48px;
+      height: 142px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      border-radius: 0 0 10px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+    }
+    .white-key:active {
+      transform: translateY(2px);
+    }
+    .black-key {
+      position: absolute;
+      top: 0;
+      left: 32px;
+      z-index: 10;
+      width: 30px;
+      height: 86px;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 0 0 7px 7px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .finger-pill {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+    .hidden {
+      display: none !important;
+    }
+    textarea.bench-input {
+      width: 100%;
+      min-height: 76px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 10px;
+      color: #f8fafc;
+      padding: 10px;
+      font-size: 14px;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Navigation Bar -->
+    <div class="card topbar">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="badge">iPad Lectern Mode</span>
+          <strong style="font-size:17px;">Piano Studio — Module 1, Lesson 1</strong>
+          <button id="audio-unlock-btn" class="touch-btn amber" onclick="testAndUnlockAudio()" style="min-height:34px; padding:4px 12px; font-size:13px;">
+            🔊 Tap Here to Test &amp; Enable iPad Sound
+          </button>
+        </div>
+        <div style="font-size:12px; color:#94a3b8; margin-top:4px;">
+          Tap any note on the sheet music or piano keys below · Works even if iPad Silent Mode is on
+        </div>
+      </div>
+
+      <div class="nav-tabs">
+        <button id="tab-score" class="tab-btn active" onclick="switchView('score')">🎼 Twinkle Score</button>
+        <button id="tab-trainer" class="tab-btn" onclick="switchView('trainer')">🎯 Grand Stave Trainer</button>
+        <button id="tab-checkin" class="tab-btn" onclick="switchView('checkin')">📝 Bench Check-In &amp; Metronome</button>
+      </div>
+    </div>
+
+    <!-- VIEW 1: TWINKLE INTERACTIVE SCORE -->
+    <div id="view-score" class="card" style="display:flex; flex-direction:column; gap:12px;">
+      <div class="controls-row">
+        <div class="btn-group">
+          <button id="hand-lh" class="touch-btn primary" onclick="setHandMode('lh')">LH Alone (Task 2)</button>
+          <button id="hand-rh" class="touch-btn" onclick="setHandMode('rh')">RH Alone</button>
+          <button id="hand-ht" class="touch-btn" onclick="setHandMode('ht')">Hands Together</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="touch-btn" onclick="stepBeat(-1)">◀ Step</button>
+          <button id="play-btn" class="touch-btn emerald" onclick="togglePlay()">▶ Play</button>
+          <button class="touch-btn" onclick="stepBeat(1)">Step ▶</button>
+          <select id="section-select" class="touch-select" onchange="setSection(this.value)">
+            <option value="bars12">Bars 1–2 (LH Assignment)</option>
+            <option value="bars34">Bars 3–4 (Phrase Resolution)</option>
+          </select>
+          <select id="bpm-select" class="touch-select" onchange="setBpm(this.value)">
+            <option value="48">48 BPM (Slow)</option>
+            <option value="58">58 BPM (Medium)</option>
+            <option value="66" selected>66 BPM (Target)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grand Stave SVG Score -->
+      <div class="stave-box">
+        <svg id="score-svg" viewBox="0 0 820 198" style="width:100%; height:auto; display:block;"></svg>
+      </div>
+
+      <!-- Coaching + Synchronized Keyboard -->
+      <div class="coach-grid">
+        <div class="readout-box">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong id="beat-badge" style="font-size:15px;">Bar 1 · Beat 1</strong>
+            <span id="lyric-badge" class="badge">"Twin-"</span>
+          </div>
+          <div id="rh-readout" style="font-size:14px; font-weight:700; color:#34d399;">
+            RH (Treble): C4 · Finger 1
+          </div>
+          <div id="lh-readout" style="font-size:14px; font-weight:700; color:#60a5fa;">
+            LH (Bass): C3 · Finger 5 (Space 2: "All Cows")
+          </div>
+          <div id="interval-tip" style="font-size:13px; color:#cbd5e1; line-height:1.4;">
+            Tap any beat column on the score above or tap Step ▶ to walk through beat by beat.
+          </div>
+        </div>
+
+        <div class="kbd-scroll">
+          <div id="score-keyboard" class="kbd-wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: GRAND STAVE SIGHT-READING & INTERVAL TRAINER -->
+    <div id="view-trainer" class="card hidden" style="display:flex; flex-direction:column; gap:12px;">
+      <div class="controls-row">
+        <div class="btn-group">
+          <button id="tmode-treble" class="touch-btn" onclick="setTrainerMode('treble')">Treble Only</button>
+          <button id="tmode-bass" class="touch-btn" onclick="setTrainerMode('bass')">Bass Only</button>
+          <button id="tmode-grand" class="touch-btn primary" onclick="setTrainerMode('grand')">Full Grand Stave</button>
+          <button id="tmode-intervals" class="touch-btn" onclick="setTrainerMode('intervals')">Intervals (2nd–5th)</button>
+        </div>
+
+        <div class="btn-group">
+          <button id="landmark-btn" class="touch-btn primary" onclick="toggleLandmarks()">⚓ Landmarks: ON</button>
+          <button class="touch-btn" onclick="replayQuizAudio()">🔊 Hear Note</button>
+          <button class="touch-btn" onclick="nextQuizQuestion()">Skip →</button>
+          <span class="badge" style="font-size:14px; padding:8px 12px;">
+            Score: <span id="q-correct">0</span>/<span id="q-total">0</span> (🔥 <span id="q-streak">0</span>)
+          </span>
+        </div>
+      </div>
+
+      <div class="stave-box">
+        <svg id="trainer-svg" viewBox="0 0 760 250" style="width:100%; height:auto; display:block;"></svg>
+      </div>
+
+      <div id="trainer-interval-bar" class="btn-group hidden" style="justify-content:center;">
+        <button class="touch-btn" onclick="answerInterval(2)">2nd (Step: Line↔Space)</button>
+        <button class="touch-btn" onclick="answerInterval(3)">3rd (Skip: Line→Line / Space→Space)</button>
+        <button class="touch-btn" onclick="answerInterval(4)">Perfect 4th</button>
+        <button class="touch-btn" onclick="answerInterval(5)">Perfect 5th</button>
+      </div>
+
+      <div id="trainer-feedback" class="readout-box" style="flex-direction:row; justify-content:space-between; align-items:center;">
+        <span id="trainer-feedback-text" style="font-size:14px;">Tap the matching key on the keyboard below!</span>
+        <span id="trainer-compass" style="font-size:12px; color:#94a3b8;"></span>
+      </div>
+
+      <div class="kbd-scroll">
+        <div id="trainer-keyboard" class="kbd-wrap"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: BENCH CHECK-IN & METRONOME (SYNCS TO MAC) -->
+    <div id="view-checkin" class="card hidden" style="display:flex; flex-direction:column; gap:14px;">
+      <div class="coach-grid">
+        <!-- Metronome -->
+        <div class="readout-box" style="gap:12px;">
+          <strong style="font-size:16px;">⏱ Studio Metronome (4/4)</strong>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:28px; font-weight:800;"><span id="m-bpm-label">60</span> <small style="font-size:14px; color:#94a3b8;">BPM</small></span>
+            <div class="btn-group">
+              <button class="touch-btn" onclick="setMetroBpm(60)">60 (Scales)</button>
+              <button class="touch-btn" onclick="setMetroBpm(66)">66 (Twinkle)</button>
+              <button class="touch-btn" onclick="setMetroBpm(72)">72 (Ode)</button>
+            </div>
+          </div>
+          <input type="range" id="m-slider" min="40" max="120" value="60" oninput="setMetroBpm(this.value)" style="width:100%; height:32px;" />
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <button id="metro-toggle-btn" class="touch-btn emerald" onclick="toggleMetro()">▶ Start Metronome</button>
+            <div style="display:flex; gap:8px;">
+              <span id="mbeat-0" class="badge" style="background:#334155;">1</span>
+              <span id="mbeat-1" class="badge" style="background:#334155;">2</span>
+              <span id="mbeat-2" class="badge" style="background:#334155;">3</span>
+              <span id="mbeat-3" class="badge" style="background:#334155;">4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sync Progress Back to Mac -->
+        <div class="readout-box" style="gap:10px;">
+          <strong style="font-size:16px;">📲 Save Practice Session to Mac (`LESSON_LOG.md`)</strong>
+          <p style="font-size:13px; color:#94a3b8; margin:0;">
+            Check off what you practiced on the piano bench and tap Save—Antigravity on your Mac will immediately see it in `LESSON_LOG.md`.
+          </p>
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px;">
+            <input type="checkbox" class="bench-chk" value="C Major Scale 1-Octave Warm-up (RH & LH)" checked style="width:20px; height:20px;" />
+            C Major Scale 1-Octave Warm-up (RH &amp; LH)
+          </label>
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px;">
+            <input type="checkbox" class="bench-chk" value="Twinkle Bars 1-2 LH Alone (5-1-3-1 / 5-1-2-1)" style="width:20px; height:20px;" />
+            Twinkle Bars 1–2 LH Alone (`5-1-3-1` / `5-1-2-1`)
+          </label>
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px;">
+            <input type="checkbox" class="bench-chk" value="Twinkle Bars 1-4 Hands Together" style="width:20px; height:20px;" />
+            Twinkle Bars 1–4 Hands Together
+          </label>
+          <label style="display:flex; align-items:center; gap:10px; font-size:14px;">
+            <input type="checkbox" class="bench-chk" value="Ode to Joy 2-Hand Review" style="width:20px; height:20px;" />
+            Ode to Joy (Bars 1–16) Review
+          </label>
+
+          <textarea id="bench-notes" class="bench-input" placeholder="Optional note or question from the piano bench (you can use iPad microphone dictation)..."></textarea>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <button class="touch-btn primary" onclick="submitBenchLog()">💾 Save to Mac Lesson Log</button>
+            <span id="save-status" style="font-size:13px; color:#34d399; font-weight:600;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- FULL NOTE TABLE (C3 to G5) ---
+    const ALL_NOTES = [
+      { id: "C3", step: -7, freq: 130.81, clef: "bass", landmark: "All Cows (Space 2)", hasSharp: true, sharpFreq: 138.59 },
+      { id: "D3", step: -6, freq: 146.83, clef: "bass", landmark: "Middle Bass Line (Compass Pivot)", hasSharp: true, sharpFreq: 155.56 },
+      { id: "E3", step: -5, freq: 164.81, clef: "bass", landmark: "All Cows Eat (Space 3)", hasSharp: false },
+      { id: "F3", step: -4, freq: 174.61, clef: "bass", landmark: "F-Clef Line 4", hasSharp: true, sharpFreq: 185.00 },
+      { id: "G3", step: -3, freq: 196.00, clef: "bass", landmark: "All Cows Eat Grass (Space 4)", hasSharp: true, sharpFreq: 207.65 },
+      { id: "A3", step: -2, freq: 220.00, clef: "bass", landmark: "Top Bass Line 5", hasSharp: true, sharpFreq: 233.08 },
+      { id: "B3", step: -1, freq: 246.94, clef: "bass", landmark: "Boat B (Top of Bass Stave)", hasSharp: false, anchor: "Boat B" },
+      { id: "C4", step: 0,  freq: 261.63, clef: "treble", landmark: "Middle C (Ledger Line)", hasSharp: true, sharpFreq: 277.18, anchor: "Mid C" },
+      { id: "D4", step: 1,  freq: 293.66, clef: "treble", landmark: "Doggie D (Under Line 1)", hasSharp: true, sharpFreq: 311.13, anchor: "Dog D" },
+      { id: "E4", step: 2,  freq: 329.63, clef: "treble", landmark: "Every (Line 1)", hasSharp: false },
+      { id: "F4", step: 3,  freq: 349.23, clef: "treble", landmark: "F in FACE (Space 1)", hasSharp: true, sharpFreq: 369.99 },
+      { id: "G4", step: 4,  freq: 392.00, clef: "treble", landmark: "Good / G-Clef Line 2", hasSharp: true, sharpFreq: 415.30 },
+      { id: "A4", step: 5,  freq: 440.00, clef: "treble", landmark: "A in FACE (Space 2)", hasSharp: true, sharpFreq: 466.16 },
+      { id: "B4", step: 6,  freq: 493.88, clef: "treble", landmark: "Middle Treble Line 3 (Compass Pivot)", hasSharp: false },
+      { id: "C5", step: 7,  freq: 523.25, clef: "treble", landmark: "C in FACE (Space 3)", hasSharp: true, sharpFreq: 554.37 },
+      { id: "D5", step: 8,  freq: 587.33, clef: "treble", landmark: "Deserves (Line 4)", hasSharp: true, sharpFreq: 622.25 },
+      { id: "E5", step: 9,  freq: 659.25, clef: "treble", landmark: "E in FACE (Space 4)", hasSharp: false },
+      { id: "F5", step: 10, freq: 698.46, clef: "treble", landmark: "Fudge (Top Line 5)", hasSharp: true, sharpFreq: 739.99 },
+      { id: "G5", step: 11, freq: 783.99, clef: "treble", landmark: "Top of Treble Stave", hasSharp: false }
+    ];
+
+    const SCORE_KEYS = ALL_NOTES.slice(0, 15);
+
+    const SECTIONS = {
+      bars12: [
+        { bar: 1, beat: "1",   lyric: "Twin-", rh: { id: "C4", f: "1", strike: true, dur: 2 }, lh: { id: "C3", f: "5", hint: "Space 2 (All Cows) — Anchor pinky on C3" } },
+        { bar: 1, beat: "1 &", lyric: "(hold)", rh: { id: "C4", f: "1", strike: false },        lh: { id: "G3", f: "1", hint: "Up a 5th to Space 4 (Grass) — Thumb on G3" } },
+        { bar: 1, beat: "2",   lyric: "-kle,",  rh: { id: "C4", f: "1", strike: true, dur: 2 }, lh: { id: "E3", f: "3", hint: "Down a 3rd (Skip) to Space 3 (Eat) — Finger 3" } },
+        { bar: 1, beat: "2 &", lyric: "(hold)", rh: { id: "C4", f: "1", strike: false },        lh: { id: "G3", f: "1", hint: "Back up a 3rd to Space 4 (G3) — Thumb" } },
+        { bar: 1, beat: "3",   lyric: "twin-",  rh: { id: "G4", f: "5", strike: true, dur: 2 }, lh: { id: "C3", f: "5", hint: "Repeat the exact C-G-E-G pattern!" } },
+        { bar: 1, beat: "3 &", lyric: "(hold)", rh: { id: "G4", f: "5", strike: false },        lh: { id: "G3", f: "1", hint: "Top of broken C triad (G3)" } },
+        { bar: 1, beat: "4",   lyric: "-kle,",  rh: { id: "G4", f: "5", strike: true, dur: 2 }, lh: { id: "E3", f: "3", hint: "Middle of triad (E3, Space 3)" } },
+        { bar: 1, beat: "4 &", lyric: "(hold)", rh: { id: "G4", f: "5", strike: false },        lh: { id: "G3", f: "1", hint: "Thumb on G3 before Bar 2 stretch" } },
+        { bar: 2, beat: "1",   lyric: "lit-",   rh: { id: "A4", f: "5", strike: true, dur: 2 }, lh: { id: "C3", f: "5", hint: "Bar 2: Pinky stays anchored on C3 (Space 2)" } },
+        { bar: 2, beat: "1 &", lyric: "(hold)", rh: { id: "A4", f: "5", strike: false },        lh: { id: "A3", f: "1", hint: "Thumb reaches up 1 step to Top Line 5 (A3)" } },
+        { bar: 2, beat: "2",   lyric: "-tle",   rh: { id: "A4", f: "5", strike: true, dur: 2 }, lh: { id: "F3", f: "2", hint: "Index Finger 2 plays Line 4 (F-Clef line F3)" } },
+        { bar: 2, beat: "2 &", lyric: "(hold)", rh: { id: "A4", f: "5", strike: false },        lh: { id: "A3", f: "1", hint: "Back to Top Line 5 (A3) with Thumb" } },
+        { bar: 2, beat: "3",   lyric: "star,",  rh: { id: "G4", f: "4", strike: true, dur: 4 }, lh: { id: "C3", f: "5", hint: "2nd half of Bar 2: C3-A3-F3-A3 (5-1-2-1)" } },
+        { bar: 2, beat: "3 &", lyric: "(hold)", rh: { id: "G4", f: "4", strike: false },        lh: { id: "A3", f: "1", hint: "Top Line A3 with Thumb" } },
+        { bar: 2, beat: "4",   lyric: "(hold)", rh: { id: "G4", f: "4", strike: false },        lh: { id: "F3", f: "2", hint: "Line 4 (F3) with Finger 2" } },
+        { bar: 2, beat: "4 &", lyric: "(hold)", rh: { id: "G4", f: "4", strike: false },        lh: { id: "A3", f: "1", hint: "Top Line A3 with Thumb" } }
+      ],
+      bars34: [
+        { bar: 3, beat: "1",   lyric: "How",    rh: { id: "F4", f: "4", strike: true, dur: 2 }, lh: { id: "C3", f: "5", hint: "Bar 3: C3 anchor (Space 2)" } },
+        { bar: 3, beat: "1 &", lyric: "(hold)", rh: { id: "F4", f: "4", strike: false },        lh: { id: "A3", f: "1", hint: "Top Line A3 (Thumb)" } },
+        { bar: 3, beat: "2",   lyric: "I",      rh: { id: "F4", f: "4", strike: true, dur: 2 }, lh: { id: "F3", f: "2", hint: "Line 4 F3 (Finger 2)" } },
+        { bar: 3, beat: "2 &", lyric: "(hold)", rh: { id: "F4", f: "4", strike: false },        lh: { id: "A3", f: "1", hint: "Top Line A3 (Thumb)" } },
+        { bar: 3, beat: "3",   lyric: "won-",   rh: { id: "E4", f: "3", strike: true, dur: 2 }, lh: { id: "C3", f: "5", hint: "Return to C Major triad: C3-G3-E3-G3 (5-1-3-1)" } },
+        { bar: 3, beat: "3 &", lyric: "(hold)", rh: { id: "E4", f: "3", strike: false },        lh: { id: "G3", f: "1", hint: "Space 4 G3 (Thumb)" } },
+        { bar: 3, beat: "4",   lyric: "-der",   rh: { id: "E4", f: "3", strike: true, dur: 2 }, lh: { id: "E3", f: "3", hint: "Space 3 E3 (Finger 3)" } },
+        { bar: 3, beat: "4 &", lyric: "(hold)", rh: { id: "E4", f: "3", strike: false },        lh: { id: "G3", f: "1", hint: "Space 4 G3 (Thumb)" } },
+        { bar: 4, beat: "1",   lyric: "what",   rh: { id: "D4", f: "2", strike: true, dur: 2 }, lh: { id: "C3", f: "5", hint: "Bar 4: C3 anchor" } },
+        { bar: 4, beat: "1 &", lyric: "(hold)", rh: { id: "D4", f: "2", strike: false },        lh: { id: "G3", f: "1", hint: "Space 4 G3 (Thumb)" } },
+        { bar: 4, beat: "2",   lyric: "you",    rh: { id: "D4", f: "2", strike: true, dur: 2 }, lh: { id: "F3", f: "2", hint: "Line 4 F3 (V7 color, Finger 2)" } },
+        { bar: 4, beat: "2 &", lyric: "(hold)", rh: { id: "D4", f: "2", strike: false },        lh: { id: "G3", f: "1", hint: "Space 4 G3 (Thumb)" } },
+        { bar: 4, beat: "3",   lyric: "are!",   rh: { id: "C4", f: "1", strike: true, dur: 4 }, lh: { id: "C3", f: "5", hint: "Home resolution to C Major (C3-G3-E3-G3)" } },
+        { bar: 4, beat: "3 &", lyric: "(hold)", rh: { id: "C4", f: "1", strike: false },        lh: { id: "G3", f: "1", hint: "Space 4 G3 (Thumb)" } },
+        { bar: 4, beat: "4",   lyric: "(hold)", rh: { id: "C4", f: "1", strike: false },        lh: { id: "E3", f: "3", hint: "Space 3 E3 (Finger 3)" } },
+        { bar: 4, beat: "4 &", lyric: "(hold)", rh: { id: "C4", f: "1", strike: false },        lh: { id: "G3", f: "1", hint: "Final G3 (Thumb)" } }
+      ]
+    };
+
+    // --- IPAD SAFARI ROBUST AUDIO ENGINE ---
+    // Uses both:
+    // 1. HTML5 <audio> WAV synthesizer (bypasses iOS Silent Mode switch!)
+    // 2. Web Audio API + navigator.audioSession.type = 'playback'
+    let audioCtx = null;
+    let audioUnlocked = false;
+    const wavCache = {};
+
+    function buildPianoWavDataURI(freq, durationSec = 0.48) {
+      const key = `${Math.round(freq)}_${Math.round(durationSec * 100)}`;
+      if (wavCache[key]) return wavCache[key];
+
+      const sampleRate = 22050;
+      const numSamples = Math.floor(sampleRate * durationSec);
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+
+      writeStr(0, "RIFF");
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeStr(8, "WAVE");
+      writeStr(12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true); // PCM
+      view.setUint16(22, 1, true); // Mono
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, "data");
+      view.setUint32(40, numSamples * 2, true);
+
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const attack = Math.min(1, t / 0.01);
+        const decay = Math.exp(-4.8 * t);
+        // Warm piano harmonic blend (fundamental + 2nd + 3rd harmonic)
+        const wave =
+          0.65 * Math.sin(2 * Math.PI * freq * t) +
+          0.25 * Math.sin(2 * Math.PI * freq * 2 * t) +
+          0.10 * Math.sin(2 * Math.PI * freq * 3 * t);
+        const sample = Math.max(-1, Math.min(1, wave * attack * decay * 0.65));
+        view.setInt16(44 + i * 2, sample * 32767, true);
+      }
+
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const uri = "data:audio/wav;base64," + btoa(binary);
+      wavCache[key] = uri;
+      return uri;
+    }
+
+    function unlockiPadAudio() {
+      try {
+        if (navigator.audioSession) {
+          navigator.audioSession.type = "playback";
+        }
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx && !audioCtx) {
+          audioCtx = new Ctx();
+        }
+        if (audioCtx) {
+          if (audioCtx.state === "suspended" || audioCtx.state === "interrupted") {
+            audioCtx.resume();
+          }
+          // Play 1-sample silent buffer to unlock iOS WebKit
+          const buf = audioCtx.createBuffer(1, 1, 22050);
+          const src = audioCtx.createBufferSource();
+          src.buffer = buf;
+          src.connect(audioCtx.destination);
+          src.start(0);
+        }
+        audioUnlocked = true;
+        const btn = document.getElementById("audio-unlock-btn");
+        if (btn) {
+          btn.textContent = "🔊 iPad Sound Ready ✓";
+          btn.className = "touch-btn emerald";
+        }
+      } catch (e) {}
+    }
+
+    function testAndUnlockAudio() {
+      unlockiPadAudio();
+      playTone(261.63, 0.45);
+      setTimeout(() => playTone(329.63, 0.45), 140);
+      setTimeout(() => playTone(392.00, 0.55), 280);
+    }
+
+    // Unlock on first touch/click anywhere
+    document.addEventListener("touchend", unlockiPadAudio, { once: true, passive: true });
+    document.addEventListener("click", unlockiPadAudio, { once: true, passive: true });
+
+    function playTone(freq, duration = 0.45, gainLevel = 0.30) {
+      unlockiPadAudio();
+      // Play via HTML5 <audio> WAV so it ALWAYS plays on iPadOS even when Silent Mode is active
+      try {
+        const uri = buildPianoWavDataURI(freq, duration);
+        const a = new Audio(uri);
+        a.volume = Math.min(1, gainLevel * 2.5);
+        const p = a.play();
+        if (p && p.catch) p.catch(() => {});
+      } catch (e) {}
+    }
+
+    // --- VIEW 1: TWINKLE SCORE ---
+    let currentSection = "bars12";
+    let handMode = "lh";
+    let currentStep = 0;
+    let bpm = 66;
+    let playTimer = null;
+
+    function getScoreNoteY(noteId, isTreble) {
+      const n = ALL_NOTES.find((k) => k.id === noteId);
+      if (!n) return 100;
+      return isTreble ? 66 - (n.step - 2) * 5 : 118 + (-2 - n.step) * 5;
+    }
+
+    function renderScore() {
+      const svg = document.getElementById("score-svg");
+      const steps = SECTIONS[currentSection];
+      const stroke = "#e2e8f0";
+
+      let html = `
+        <line x1="38" y1="26" x2="38" y2="158" stroke="${stroke}" stroke-width="2.2" />
+        <line x1="428" y1="26" x2="428" y2="158" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.6" />
+        <line x1="802" y1="26" x2="802" y2="158" stroke="${stroke}" stroke-width="2.2" />
+      `;
+
+      for (let i = 0; i < 5; i++) {
+        const y = 26 + i * 10;
+        html += `<line x1="38" y1="${y}" x2="802" y2="${y}" stroke="${stroke}" stroke-width="${i === 2 ? '1.5' : '1'}" stroke-opacity="${i === 2 ? '0.85' : '0.45'}" />`;
+      }
+      for (let i = 0; i < 5; i++) {
+        const y = 118 + i * 10;
+        html += `<line x1="38" y1="${y}" x2="802" y2="${y}" stroke="${stroke}" stroke-width="${i === 2 ? '1.5' : '1'}" stroke-opacity="${i === 2 ? '0.85' : '0.45'}" />`;
+      }
+
+      html += `
+        <text x="46" y="61" font-size="44" fill="${stroke}" font-family="serif">𝄞</text>
+        <text x="46" y="148" font-size="35" fill="${stroke}" font-family="serif">𝄢</text>
+        <text x="80" y="45" font-size="16" font-weight="bold" fill="${stroke}">4</text>
+        <text x="80" y="63" font-size="16" font-weight="bold" fill="${stroke}">4</text>
+        <text x="80" y="137" font-size="16" font-weight="bold" fill="${stroke}">4</text>
+        <text x="80" y="155" font-size="16" font-weight="bold" fill="${stroke}">4</text>
+        <text x="108" y="16" font-size="12" font-weight="bold" fill="#94a3b8">Bar ${steps[0].bar}</text>
+        <text x="440" y="16" font-size="12" font-weight="bold" fill="#94a3b8">Bar ${steps[8].bar}</text>
+      `;
+
+      steps.forEach((s, idx) => {
+        const barOffset = idx >= 8 ? 22 : 0;
+        const x = 118 + idx * 41 + barOffset;
+        const isCurrent = idx === currentStep;
+
+        if (isCurrent) {
+          html += `<rect x="${x - 18}" y="18" width="36" height="172" rx="6" fill="#6366f1" fill-opacity="0.24" stroke="#818cf8" stroke-width="1.5" />`;
+        }
+
+        html += `<rect x="${x - 20}" y="18" width="40" height="172" fill="transparent" onclick="jumpToStep(${idx})" />`;
+
+        if (s.rh.strike) {
+          const ry = getScoreNoteY(s.rh.id, true);
+          const rhActive = handMode !== "lh";
+          const rhColor = isCurrent ? "#34d399" : (rhActive ? "#f8fafc" : "#64748b");
+          const rhOpacity = rhActive ? "1" : "0.35";
+
+          if (s.rh.id === "C4") {
+            html += `<line x1="${x - 12}" y1="${ry}" x2="${x + 12}" y2="${ry}" stroke="${rhColor}" stroke-width="2" opacity="${rhOpacity}" />`;
+          }
+          html += `<line x1="${x + 6}" y1="${ry}" x2="${x + 6}" y2="${ry - 28}" stroke="${rhColor}" stroke-width="2" opacity="${rhOpacity}" />`;
+          const isHalf = s.rh.dur === 4;
+          html += `<ellipse cx="${x}" cy="${ry}" rx="6.8" ry="4.8" transform="rotate(-18 ${x} ${ry})" fill="${isHalf ? 'none' : rhColor}" stroke="${rhColor}" stroke-width="1.8" opacity="${rhOpacity}" />`;
+          html += `<text x="${x}" y="${ry - 33}" font-size="12" font-weight="bold" fill="#34d399" text-anchor="middle" opacity="${rhOpacity}">${s.rh.f}</text>`;
+          html += `<text x="${x + 6}" y="94" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">${s.lyric}</text>`;
+        }
+
+        const ly = getScoreNoteY(s.lh.id, false);
+        const lhActive = handMode !== "rh";
+        const lhColor = isCurrent ? "#60a5fa" : (lhActive ? "#f8fafc" : "#64748b");
+        const lhOpacity = lhActive ? "1" : "0.35";
+
+        html += `<line x1="${x - 6}" y1="${ly}" x2="${x - 6}" y2="${ly + 26}" stroke="${lhColor}" stroke-width="2" opacity="${lhOpacity}" />`;
+        html += `<ellipse cx="${x}" cy="${ly}" rx="6.5" ry="4.6" transform="rotate(-18 ${x} ${ly})" fill="${lhColor}" opacity="${lhOpacity}" />`;
+
+        if (idx % 4 < 3) {
+          const nextX = 118 + (idx + 1) * 41 + barOffset;
+          const nextLy = getScoreNoteY(steps[idx + 1].lh.id, false);
+          html += `<line x1="${x - 6}" y1="${ly + 26}" x2="${nextX - 6}" y2="${nextLy + 26}" stroke="${lhColor}" stroke-width="3.2" opacity="${lhOpacity}" />`;
+        }
+
+        html += `<text x="${x}" y="175" font-size="12" font-weight="bold" fill="#60a5fa" text-anchor="middle" opacity="${lhOpacity}">${s.lh.f}</text>`;
+        html += `<text x="${x}" y="190" font-size="12" fill="#cbd5e1" text-anchor="middle">${s.lh.id}</text>`;
+      });
+
+      svg.innerHTML = html;
+    }
+
+    function renderScoreKeyboard() {
+      const container = document.getElementById("score-keyboard");
+      const stepObj = SECTIONS[currentSection][currentStep];
+      const lhId = handMode !== "rh" ? stepObj.lh.id : null;
+      const rhId = handMode !== "lh" ? stepObj.rh.id : null;
+
+      let html = "";
+      SCORE_KEYS.forEach((k) => {
+        const isLH = k.id === lhId;
+        const isRH = k.id === rhId;
+        let style = "";
+        let pill = "";
+        if (isLH) {
+          style = "background:#3b82f6; color:#ffffff;";
+          pill = `<span class="finger-pill" style="background:#1e3a8a; color:#fff;">LH ${stepObj.lh.f}</span>`;
+        } else if (isRH) {
+          style = "background:#10b981; color:#052e16;";
+          pill = `<span class="finger-pill" style="background:#064e3b; color:#fff;">RH ${stepObj.rh.f}</span>`;
+        } else if (k.anchor) {
+          pill = `<span style="font-size:11px; color:#d97706; font-weight:800; margin-bottom:4px;">${k.anchor}</span>`;
+        }
+
+        html += `
+          <div style="position:relative; flex-shrink:0;">
+            <button class="white-key" style="${style}" onclick="playTone(${k.freq}, 0.5)">
+              ${pill}
+              <span>${k.id}</span>
+            </button>
+            ${k.hasSharp ? `<button class="black-key" onclick="playTone(${k.sharpFreq}, 0.45)">♯</button>` : ""}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function updateScoreReadout(triggerAudio = false) {
+      const stepObj = SECTIONS[currentSection][currentStep];
+      document.getElementById("beat-badge").textContent = `Bar ${stepObj.bar} · Beat ${stepObj.beat}`;
+      document.getElementById("lyric-badge").textContent = `"${stepObj.lyric}"`;
+      document.getElementById("rh-readout").textContent =
+        `RH (Treble): ${stepObj.rh.id} · Finger ${stepObj.rh.f} ${stepObj.rh.strike ? "(Play)" : "(Hold steady)"}`;
+      document.getElementById("lh-readout").textContent =
+        `LH (Bass): ${stepObj.lh.id} · Finger ${stepObj.lh.f}`;
+      document.getElementById("interval-tip").textContent = stepObj.lh.hint;
+
+      renderScore();
+      renderScoreKeyboard();
+
+      if (triggerAudio) {
+        const eighthSec = (60 / bpm) / 2;
+        if (handMode !== "rh") {
+          const ln = ALL_NOTES.find((k) => k.id === stepObj.lh.id);
+          if (ln) playTone(ln.freq, eighthSec * 0.92, 0.28);
+        }
+        if (handMode !== "lh" && stepObj.rh.strike) {
+          const rn = ALL_NOTES.find((k) => k.id === stepObj.rh.id);
+          if (rn) playTone(rn.freq, eighthSec * stepObj.rh.dur * 0.95, 0.32);
+        }
+      }
+    }
+
+    function jumpToStep(idx) {
+      stopPlay();
+      currentStep = idx;
+      updateScoreReadout(true);
+    }
+
+    function stepBeat(delta) {
+      stopPlay();
+      const len = SECTIONS[currentSection].length;
+      currentStep = (currentStep + delta + len) % len;
+      updateScoreReadout(true);
+    }
+
+    function setHandMode(m) {
+      handMode = m;
+      ["lh", "rh", "ht"].forEach((id) => {
+        document.getElementById(`hand-${id}`).className =
+          id === m ? "touch-btn primary" : "touch-btn";
+      });
+      updateScoreReadout(true);
+    }
+
+    function setSection(sec) {
+      stopPlay();
+      currentSection = sec;
+      currentStep = 0;
+      updateScoreReadout(false);
+    }
+
+    function setBpm(val) {
+      bpm = parseInt(val, 10);
+      if (playTimer) {
+        stopPlay();
+        startPlay();
+      }
+    }
+
+    function togglePlay() {
+      if (playTimer) stopPlay();
+      else startPlay();
+    }
+
+    function startPlay() {
+      document.getElementById("play-btn").textContent = "⏹ Stop";
+      const eighthMs = ((60 / bpm) / 2) * 1000;
+      updateScoreReadout(true);
+      playTimer = setInterval(() => {
+        const len = SECTIONS[currentSection].length;
+        currentStep = (currentStep + 1) % len;
+        updateScoreReadout(true);
+      }, eighthMs);
+    }
+
+    function stopPlay() {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
+      document.getElementById("play-btn").textContent = "▶ Play";
+    }
+
+    // --- VIEW 2: GRAND STAVE TRAINER ---
+    let trainerMode = "grand";
+    let showLandmarks = true;
+    let qTarget = ALL_NOTES[7];
+    let qSecond = null;
+    let qInterval = null;
+    let qCorrect = 0;
+    let qTotal = 0;
+    let qStreak = 0;
+
+    function getTrainerNoteY(n) {
+      if (n.step === 0) return 118;
+      return n.step > 0 ? 84 - (n.step - 2) * 6 : 152 + (-2 - n.step) * 6;
+    }
+
+    function getStemDir(n) {
+      return n.clef === "treble" ? (n.step >= 6 ? "down" : "up") : (n.step >= -6 ? "down" : "up");
+    }
+
+    function renderTrainer() {
+      const svg = document.getElementById("trainer-svg");
+      const stroke = "#e2e8f0";
+      let html = `
+        <line x1="50" y1="36" x2="50" y2="200" stroke="${stroke}" stroke-width="2.5" />
+        <line x1="720" y1="36" x2="720" y2="200" stroke="${stroke}" stroke-width="2" />
+      `;
+      for (let i = 0; i < 5; i++) {
+        const y = 36 + i * 12;
+        html += `<line x1="50" y1="${y}" x2="720" y2="${y}" stroke="${stroke}" stroke-width="${i === 2 ? '1.6' : '1.1'}" stroke-opacity="${i === 2 ? '0.85' : '0.5'}" />`;
+      }
+      for (let i = 0; i < 5; i++) {
+        const y = 152 + i * 12;
+        html += `<line x1="50" y1="${y}" x2="720" y2="${y}" stroke="${stroke}" stroke-width="${i === 2 ? '1.6' : '1.1'}" stroke-opacity="${i === 2 ? '0.85' : '0.5'}" />`;
+      }
+      html += `
+        <text x="60" y="78" font-size="54" fill="${stroke}" font-family="serif">𝄞</text>
+        <text x="60" y="186" font-size="42" fill="${stroke}" font-family="serif">𝄢</text>
+      `;
+
+      if (showLandmarks) {
+        html += `
+          <line x1="145" y1="118" x2="175" y2="118" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,2" />
+          <circle cx="160" cy="118" r="5" fill="#10b981" />
+          <text x="160" y="135" font-size="12" fill="#34d399" text-anchor="middle" font-weight="bold">Mid C4</text>
+          <circle cx="220" cy="90" r="5" fill="#f59e0b" />
+          <text x="220" y="106" font-size="12" fill="#fbbf24" text-anchor="middle" font-weight="bold">Dog D4</text>
+          <circle cx="280" cy="146" r="5" fill="#3b82f6" />
+          <text x="280" y="138" font-size="12" fill="#60a5fa" text-anchor="middle" font-weight="bold">Boat B3</text>
+        `;
+      }
+
+      html += drawQuizNote(qTarget, trainerMode === "intervals" ? 400 : 440, "#818cf8");
+      if (trainerMode === "intervals" && qSecond) {
+        html += drawQuizNote(qSecond, 495, "#f472b6");
+      }
+      svg.innerHTML = html;
+
+      const dir = getStemDir(qTarget);
+      document.getElementById("trainer-compass").textContent =
+        `Compass Rule: Stem ${dir.toUpperCase()}`;
+    }
+
+    function drawQuizNote(n, x, color) {
+      const y = getTrainerNoteY(n);
+      const dir = getStemDir(n);
+      let s = "";
+      if (n.step === 0) {
+        s += `<line x1="${x - 16}" y1="${y}" x2="${x + 16}" y2="${y}" stroke="#e2e8f0" stroke-width="2" />`;
+      }
+      if (dir === "up") {
+        s += `<line x1="${x + 7}" y1="${y}" x2="${x + 7}" y2="${y - 36}" stroke="${color}" stroke-width="2.2" />`;
+      } else {
+        s += `<line x1="${x - 7}" y1="${y}" x2="${x - 7}" y2="${y + 36}" stroke="${color}" stroke-width="2.2" />`;
+      }
+      s += `<ellipse cx="${x}" cy="${y}" rx="8.5" ry="6" transform="rotate(-18 ${x} ${y})" fill="${color}" />`;
+      return s;
+    }
+
+    function renderTrainerKeyboard(highlightId = null) {
+      const container = document.getElementById("trainer-keyboard");
+      let html = "";
+      ALL_NOTES.forEach((k) => {
+        const isHi = k.id === highlightId;
+        const style = isHi ? "background:#6366f1; color:#fff;" : "";
+        html += `
+          <div style="position:relative; flex-shrink:0;">
+            <button class="white-key" style="width:42px; ${style}" onclick="handleQuizKey('${k.id}')">
+              <span>${k.id}</span>
+            </button>
+            ${k.hasSharp ? `<button class="black-key" style="left:28px; width:26px;" onclick="playTone(${k.sharpFreq}, 0.45)">♯</button>` : ""}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function setTrainerMode(m) {
+      trainerMode = m;
+      ["treble", "bass", "grand", "intervals"].forEach((id) => {
+        document.getElementById(`tmode-${id}`).className =
+          id === m ? "touch-btn primary" : "touch-btn";
+      });
+      const bar = document.getElementById("trainer-interval-bar");
+      if (m === "intervals") bar.classList.remove("hidden");
+      else bar.classList.add("hidden");
+      nextQuizQuestion();
+    }
+
+    function toggleLandmarks() {
+      showLandmarks = !showLandmarks;
+      const btn = document.getElementById("landmark-btn");
+      btn.textContent = `⚓ Landmarks: ${showLandmarks ? "ON" : "OFF"}`;
+      btn.className = showLandmarks ? "touch-btn primary" : "touch-btn";
+      renderTrainer();
+    }
+
+    function nextQuizQuestion() {
+      let pool = ALL_NOTES;
+      if (trainerMode === "treble") pool = ALL_NOTES.filter((n) => n.clef === "treble");
+      if (trainerMode === "bass") pool = ALL_NOTES.filter((n) => n.clef === "bass");
+
+      if (trainerMode === "intervals") {
+        const choices = [2, 3, 4, 5];
+        qInterval = choices[Math.floor(Math.random() * choices.length)];
+        const dir = Math.random() > 0.4 ? 1 : -1;
+        const delta = dir * (qInterval - 1);
+        const valid = ALL_NOTES.filter((n) => n.step + delta >= -7 && n.step + delta <= 11);
+        qTarget = valid[Math.floor(Math.random() * valid.length)];
+        qSecond = ALL_NOTES.find((n) => n.step === qTarget.step + delta);
+      } else {
+        qTarget = pool[Math.floor(Math.random() * pool.length)];
+        qSecond = null;
+      }
+      renderTrainer();
+      renderTrainerKeyboard();
+    }
+
+    function replayQuizAudio() {
+      playTone(qTarget.freq, 0.6);
+      if (trainerMode === "intervals" && qSecond) {
+        setTimeout(() => playTone(qSecond.freq, 0.6), 450);
+      }
+    }
+
+    function handleQuizKey(id) {
+      const clicked = ALL_NOTES.find((n) => n.id === id);
+      if (!clicked) return;
+      playTone(clicked.freq, 0.55);
+      const expected = trainerMode === "intervals" && qSecond ? qSecond : qTarget;
+      if (clicked.id === expected.id) {
+        qCorrect++;
+        qTotal++;
+        qStreak++;
+        document.getElementById("trainer-feedback-text").textContent =
+          `✅ Correct! ${expected.id} (${expected.landmark})`;
+        renderTrainerKeyboard(expected.id);
+        setTimeout(nextQuizQuestion, 850);
+      } else {
+        qTotal++;
+        qStreak = 0;
+        document.getElementById("trainer-feedback-text").textContent =
+          `❌ You tapped ${clicked.id}. Check the landmark anchor and try again!`;
+      }
+      document.getElementById("q-correct").textContent = qCorrect;
+      document.getElementById("q-total").textContent = qTotal;
+      document.getElementById("q-streak").textContent = qStreak;
+    }
+
+    function answerInterval(val) {
+      if (trainerMode !== "intervals" || !qSecond) return;
+      replayQuizAudio();
+      if (val === qInterval) {
+        qCorrect++;
+        qTotal++;
+        qStreak++;
+        document.getElementById("trainer-feedback-text").textContent =
+          `✅ Spot on! ${qTarget.id} → ${qSecond.id} is a ${val}th/step/skip.`;
+        setTimeout(nextQuizQuestion, 900);
+      } else {
+        qTotal++;
+        qStreak = 0;
+        document.getElementById("trainer-feedback-text").textContent =
+          `❌ Not quite — count lines & spaces from ${qTarget.id} to ${qSecond.id}.`;
+      }
+      document.getElementById("q-correct").textContent = qCorrect;
+      document.getElementById("q-total").textContent = qTotal;
+      document.getElementById("q-streak").textContent = qStreak;
+    }
+
+    // --- VIEW 3: METRONOME & MAC CHECK-IN ---
+    let metroBpm = 60;
+    let metroTimer = null;
+    let metroBeat = 0;
+
+    function setMetroBpm(val) {
+      metroBpm = parseInt(val, 10);
+      document.getElementById("m-bpm-label").textContent = metroBpm;
+      document.getElementById("m-slider").value = metroBpm;
+      if (metroTimer) {
+        stopMetro();
+        startMetro();
+      }
+    }
+
+    function toggleMetro() {
+      if (metroTimer) stopMetro();
+      else startMetro();
+    }
+
+    function startMetro() {
+      metroBeat = 0;
+      document.getElementById("metro-toggle-btn").textContent = "⏹ Stop Metronome";
+      const tick = () => {
+        playTone(metroBeat === 0 ? 1050 : 720, 0.08, 0.30);
+        for (let i = 0; i < 4; i++) {
+          document.getElementById(`mbeat-${i}`).style.background =
+            i === metroBeat ? "#10b981" : "#334155";
+        }
+        metroBeat = (metroBeat + 1) % 4;
+      };
+      tick();
+      metroTimer = setInterval(tick, (60 / metroBpm) * 1000);
+    }
+
+    function stopMetro() {
+      if (metroTimer) {
+        clearInterval(metroTimer);
+        metroTimer = null;
+      }
+      document.getElementById("metro-toggle-btn").textContent = "▶ Start Metronome";
+    }
+
+    async function submitBenchLog() {
+      const chks = Array.from(document.querySelectorAll(".bench-chk:checked")).map((c) => c.value);
+      const notes = document.getElementById("bench-notes").value;
+      const statusEl = document.getElementById("save-status");
+      statusEl.textContent = "Saving to Mac...";
+      try {
+        const res = await fetch("/api/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bpm: metroBpm, completed: chks, notes })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          statusEl.textContent = `✓ Saved to Mac LESSON_LOG.md (${data.timestamp})`;
+          document.getElementById("bench-notes").value = "";
+        } else {
+          statusEl.textContent = "Error saving log.";
+        }
+      } catch (e) {
+        statusEl.textContent = "Could not reach Mac server.";
+      }
+    }
+
+    function switchView(view) {
+      stopPlay();
+      ["score", "trainer", "checkin"].forEach((v) => {
+        document.getElementById(`view-${v}`).classList.toggle("hidden", v !== view);
+        document.getElementById(`tab-${v}`).classList.toggle("active", v === view);
+      });
+      if (view === "trainer") {
+        renderTrainer();
+        renderTrainerKeyboard();
+      }
+    }
+
+    updateScoreReadout(false);
+  </script>
+</body>
+</html>
